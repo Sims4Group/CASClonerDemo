@@ -3,9 +3,64 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:aw="clr-namespace:AvalonWizard;assembly=AvalonWizard"
         x:Class="CASClonerDemo.MainWindow"
-        Title="The Sims 4 CAS Cloner Demo" Height="500" Width="800">
+        Title="The Sims 4 CAS Cloner Demo" Height="500" Width="800" Loaded="Window_Loaded">
+    <Window.Resources>
+        <Style TargetType="{x:Type ListBox}">
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter 
+         Property="ScrollViewer.HorizontalScrollBarVisibility" 
+         Value="Disabled" 
+         />
+        </Style>
+    </Window.Resources>
     <Grid>
-        <aw:Wizard Name="Wizard" aw:Designer.PageIndex="0" WizardStyle="Aero">
+
+        <aw:Wizard Name="Wizard" aw:Designer.PageIndex="0" WizardStyle="Aero" Finished="Wizard_Finished" Cancelled="Wizard_Cancelled">
+            <aw:WizardPage Header="Please choose project type">
+                <CheckBox Content="Create Texture Replacement" HorizontalAlignment="Left" Margin="76,98,0,0" VerticalAlignment="Top" Height="28" Width="335" FontSize="22"/>
+            </aw:WizardPage>
+            <aw:WizardPage Header="Please choose Item you want to modify">
+                <StackPanel Margin="5">
+                    <TextBox Name="SerachBox" Width="400" Margin="5" KeyUp="SerachBox_KeyUp"></TextBox>
+                    <ListBox Name="CASPItemListView" Height="269" Width="560" Margin="40,20" ItemsSource="{Binding}" SelectedIndex="0" SelectionChanged="CASPItemListView_SelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Image Source="{Binding Path=ThumbnailImage}" Stretch="None"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                    <Canvas Name="ThumbnailBox" Height="150" Width="150"/>
+                </StackPanel>
+            </aw:WizardPage>
+            <aw:WizardPage Header="Please export the DDS and import the modified one">
+                <Canvas>
+                    <StackPanel Margin="5" HorizontalAlignment="Left" Width="350">
+                        <Image Name="DDSPreviewBefore" Height="250" Width="250" HorizontalAlignment="Left"/>
+                        <Button Name="DDSExportButton" Content="Export To DDS" HorizontalAlignment="Left" Width="100" Margin="67,20" Click="DDSExportButton_Click"></Button>
+                    </StackPanel>
+                    <StackPanel Margin="400, 5" HorizontalAlignment="Right" Width="350">
+                        <Image Name="DDSPreviewAfter" Height="250" Width="250" HorizontalAlignment="Right"/>
+                        <Button Name="DDSImportButton" Content="Import From DDS" HorizontalAlignment="Right" Width="100" Margin="120,20" Click="DDSImportButton_Click"></Button>
+                    </StackPanel>
+                </Canvas>
+            </aw:WizardPage>
+            <aw:WizardPage Header="You're all set. Click Finish to get package file">
+                <Canvas>
+
+                </Canvas>
+            </aw:WizardPage>
         </aw:Wizard>
+
     </Grid>
 </Window>

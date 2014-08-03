@@ -37,8 +37,26 @@
     <Reference Include="AvalonWizard">
       <HintPath>..\packages\AvalonWizard.1.2.0\lib\net40\AvalonWizard.dll</HintPath>
     </Reference>
+    <Reference Include="s4pi.ImageResource, Version=1408.2.539.27375, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CASClonerDemo.Core\Lib\s4pi.ImageResource.dll</HintPath>
+    </Reference>
+    <Reference Include="s4pi.Interfaces">
+      <HintPath>..\CASClonerDemo.Core\Lib\s4pi.Interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="s4pi.Package">
+      <HintPath>..\CASClonerDemo.Core\Lib\s4pi.Package.dll</HintPath>
+    </Reference>
+    <Reference Include="s4pi.WrapperDealer">
+      <HintPath>..\CASClonerDemo.Core\Lib\s4pi.WrapperDealer.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Custom, Version=1408.1.2050.28508, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CASClonerDemo.Core\Lib\System.Custom.dll</HintPath>
+    </Reference>
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -96,6 +114,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CASClonerDemo.Core\CASClonerDemo.Core.csproj">
+      <Project>{090b06b6-40c0-4b4c-8f19-4bf72c5a8602}</Project>
+      <Name>CASClonerDemo.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
