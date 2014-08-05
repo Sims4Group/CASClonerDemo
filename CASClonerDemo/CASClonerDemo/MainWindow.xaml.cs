@@ -77,15 +77,12 @@ namespace CASClonerDemo
             this.caspCollection = new CollectionViewSource();
             List<CASPItem> caspList  = new List<CASPItem>();
 
-            foreach (var entry in fullPack.GetResourceList.Where(tgi => tgi.ResourceType == 0x034AEECB))
+            var rlist = fullPack.GetResourceList.Where(tgi => tgi.ResourceType == 0x034AEECB).ToArray();
+            foreach (var entry in rlist)
             {
                 caspList.Add(new CASPItem(WrapperDealer.GetResource(1, fullPack, entry).Stream, entry, thumPack));
             }
-
             this.caspCollection.Source = caspList;
-
-
-
             LoadImageFinished();
         }
 
@@ -113,7 +110,11 @@ namespace CASClonerDemo
             {
                 this.selectedItem.Clear(); // clear old data;
             }
-            this.selectedItem = this.CASPItemListView.SelectedItem as CASPItem;
+            if (this.CASPItemListView.SelectedItem != null)
+                this.selectedItem = (CASPItem) this.CASPItemListView.SelectedItem;
+            if (this.selectedItem == null)
+                return;
+
             BitmapImage dds = this.selectedItem.getBitmap(fullPack);
             this.DDSPreviewBefore.Source = dds;
             this.DDSPreviewAfter.Source = dds;

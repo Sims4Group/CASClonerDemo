@@ -1,23 +1,11 @@
 ﻿<Window 
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:aw="clr-namespace:AvalonWizard;assembly=AvalonWizard"
+        xmlns:aw="clr-namespace:AvalonWizard;assembly=AvalonWizard" 
+        xmlns:local="clr-namespace:CASClonerDemo"
         x:Class="CASClonerDemo.MainWindow"
         Title="The Sims 4 CAS Cloner Demo" Height="500" Width="800" Loaded="Window_Loaded">
     <Window.Resources>
-        <Style TargetType="{x:Type ListBox}">
-            <Setter Property="ItemsPanel">
-                <Setter.Value>
-                    <ItemsPanelTemplate>
-                        <WrapPanel />
-                    </ItemsPanelTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter 
-         Property="ScrollViewer.HorizontalScrollBarVisibility" 
-         Value="Disabled" 
-         />
-        </Style>
     </Window.Resources>
     <Grid>
 
@@ -28,19 +16,20 @@
             <aw:WizardPage Header="Please choose Item you want to modify">
                 <StackPanel Margin="5">
                     <TextBox Name="SerachBox" Width="400" Margin="5" KeyUp="SerachBox_KeyUp"></TextBox>
-                    <ListBox Name="CASPItemListView" Height="269" Width="560" Margin="40,20" ItemsSource="{Binding}" SelectedIndex="0" SelectionChanged="CASPItemListView_SelectionChanged">
+                    <ListBox Height="269" Width="560" Name="CASPItemListView" Margin="40,20" SelectedIndex="0" SelectionChanged="CASPItemListView_SelectionChanged" IsSynchronizedWithCurrentItem="True">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Image Source="{Binding Path=ThumbnailImage}" Stretch="None"/>
+                                <StackPanel Orientation="Vertical"  >
+                                    <Image Width="120" Height="120" Source="{Binding Path=ThumbnailImage}" Stretch="None"/>
+                                </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal" />
+                                <local:VirtualizingWrapPanel  Orientation="Horizontal" VirtualizationMode="Recycling" IsContainerVirtualizable="True" IsVirtualizing="True" />
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                     </ListBox>
-                    <Canvas Name="ThumbnailBox" Height="150" Width="150"/>
                 </StackPanel>
             </aw:WizardPage>
             <aw:WizardPage Header="Please export the DDS and import the modified one">

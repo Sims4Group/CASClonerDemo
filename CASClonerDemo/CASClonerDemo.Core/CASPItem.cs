@@ -18,23 +18,37 @@ namespace CASClonerDemo.Core
     {
         CASPartResource.CASPartResourceTS4 casp;
         RLEResource rle;
+        private IResourceIndexEntry entry;
         
+        IPackage pack;
+
         public CASPItem(Stream s, IResourceIndexEntry entry, IPackage pack) 
         { 
             this.casp = new CASPartResource.CASPartResourceTS4(1, s);
-            var thumb= pack.Find(tgi => GetThumbnail(tgi, entry.Instance));
-            ThumbnailImage = new BitmapImage();
-            ThumbnailImage.BeginInit();
-            Stream thumbnailStream = (thumb == null) ? Assembly.GetExecutingAssembly().GetManifestResourceStream(@"CASClonerDemo.Core.Bad.bmp") : (new s4pi.ImageResource.ThumbnailResource(1, WrapperDealer.GetResource(1, pack, thumb).Stream).ToImageStream());
-            ThumbnailImage.StreamSource = thumbnailStream;
-            ThumbnailImage.EndInit();
-
+            this.pack = pack;
+            this.entry = entry;
             this.ResourceGroup = entry.ResourceGroup;
             this.Instance = entry.Instance;
         }
 
         public string Name { get { return casp.Name; } set { casp.Name = value; } }
-        public BitmapImage ThumbnailImage { get; private set; }
+        private BitmapImage thumbnail_image;
+        public BitmapImage ThumbnailImage {
+            get
+            {
+                if (this.thumbnail_image == null)
+                {
+                    var thumb = pack.Find(tgi => GetThumbnail(tgi, entry.Instance));
+                    this.thumbnail_image = new BitmapImage();
+                    this.thumbnail_image.BeginInit();
+                    Stream thumbnailStream = (thumb == null) ? Assembly.GetExecutingAssembly().GetManifestResourceStream(@"CASClonerDemo.Core.Bad.bmp") : (new s4pi.ImageResource.ThumbnailResource(1, WrapperDealer.GetResource(1, pack, thumb).Stream).ToImageStream());
+                    this.thumbnail_image.StreamSource = thumbnailStream;
+                    this.thumbnail_image.EndInit();
+                    
+                }
+                return this.thumbnail_image;
+            }
+        }
         public IResourceKey RLETGI
         {
             get
