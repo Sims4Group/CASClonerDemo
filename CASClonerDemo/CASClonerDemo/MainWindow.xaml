@@ -15,7 +15,7 @@
             </aw:WizardPage>
             <aw:WizardPage Header="Please choose Item you want to modify">
                 <StackPanel Margin="5">
-                    <TextBox Name="SerachBox" Width="400" Margin="5" KeyUp="SerachBox_KeyUp"></TextBox>
+                    <local:SearchDelayedTextBox Name="SearchBox" Width="400" Margin="5" KeyUp="SerachBox_KeyUp"/>
                     <ListBox Height="269" Width="560" Name="CASPItemListView" Margin="40,20" SelectedIndex="0" SelectionChanged="CASPItemListView_SelectionChanged" IsSynchronizedWithCurrentItem="True">
                         <ListBox.ItemTemplate>
                             <DataTemplate>

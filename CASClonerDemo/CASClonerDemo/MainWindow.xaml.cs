@@ -97,11 +97,20 @@ namespace CASClonerDemo
 
         private void SerachBox_KeyUp(object sender, KeyEventArgs e)
         {
-            this.caspCollection.View.Filter = item =>
-                {
-                    CASPItem casp = item as CASPItem;
-                    return casp.Name.ToLower().Contains(SerachBox.Text.ToLower());
-                };
+            this.caspCollection.Dispatcher.Invoke(new Action(() =>
+            {
+                this.caspCollection.View.Filter = item =>
+                    {
+                        CASPItem casp = item as CASPItem;
+                        string name = casp.Name.ToLower();
+                        var searchItems = SearchBox.Text.ToLower().Split(new char[] { ' ', '+', ',' });
+                        foreach (var str in searchItems)
+                        {
+                            if (!name.Contains(str)) return false;
+                        }
+                        return true;
+                    };
+            }));
         }
 
         private void CASPItemListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
