@@ -38,9 +38,12 @@ namespace CASClonerDemo
         private CASPItem selectedItem;
         private byte[] ddsData;
 
+
+
         public MainWindow()
         {
             InitializeComponent();
+            this.SearchBox.InputFinished += SerachBox_KeyDown;
             
         }
 
@@ -95,7 +98,7 @@ namespace CASClonerDemo
             }));
         }
 
-        private void SerachBox_KeyUp(object sender, KeyEventArgs e)
+        private void SerachBox_KeyDown(object sender, EventArgs e)
         {
             this.caspCollection.Dispatcher.Invoke(new Action(() =>
             {
