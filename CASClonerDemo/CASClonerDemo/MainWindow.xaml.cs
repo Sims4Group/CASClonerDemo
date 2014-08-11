@@ -56,10 +56,12 @@ namespace CASClonerDemo
 
             if (string.IsNullOrEmpty(fullbuildPath))
             {
-                OpenFileDialog open = new OpenFileDialog() { Filter = "DBPF Package File|*.package", Multiselect = false };
+                OpenFileDialog open = new OpenFileDialog() { Filter = "DBPF Package File|*.package", Multiselect = false, Title = "Please select your FullBuildFolder" };
                 if (open.ShowDialog() == true)
                 {
                     fullbuildPath = open.FileName;
+                    string rootDir = System.IO.Path.GetDirectoryName(fullbuildPath);
+                    thumbnailPath = System.IO.Path.Combine(rootDir, "CASDemoThumbnails.package");
                 }
                 else
                 {
@@ -75,6 +77,8 @@ namespace CASClonerDemo
             catch(Exception ex)
             {
                 MessageBox.Show(ex.ToString());
+                Environment.ExitCode = 0;
+                this.Close();
             }
 
             this.caspCollection = new CollectionViewSource();
