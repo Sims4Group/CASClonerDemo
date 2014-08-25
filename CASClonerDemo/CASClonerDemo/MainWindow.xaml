@@ -15,7 +15,8 @@
             <aw:WizardPage Header="Please choose project type">
                 <StackPanel>
                     <CheckBox x:Name="ckbReplacement" Content="Create Texture Replacement" HorizontalAlignment="Left" Margin="76,98,0,0" VerticalAlignment="Top" Height="28" Width="335" FontSize="22" ToolTip="Currently only CAS item without swatch image is supported" IsChecked="False"/>
-                    <TextBlock Margin="76,10,0,0" Text="Note: Currently only replacement is supported" FontSize="15"></TextBlock>
+                    <TextBlock Margin="76,10,0,0" Text="Note: Currently multiple swatch is not supported" FontSize="15"></TextBlock>
+                    <TextBlock Margin="76,10,0,0" Text="To get more support, please click here" FontSize="15" MouseUp="TextBlock_MouseUp"></TextBlock>
                 </StackPanel>
             </aw:WizardPage>
             <aw:WizardPage Header="Please choose Item you want to modify">

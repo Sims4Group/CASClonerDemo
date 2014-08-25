@@ -234,6 +234,11 @@ namespace CASClonerDemo
             this.Close();
         }
 
+        private void TextBlock_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            Process.Start("http://www.den.simlogical.com/denforum/index.php?topic=3190");
+        }
+
 
 
     }
