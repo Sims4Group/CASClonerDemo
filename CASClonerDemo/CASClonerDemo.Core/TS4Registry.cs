@@ -18,7 +18,7 @@ namespace CASClonerDemo.Core
             get
             {
                 RegistryKey rk = Registry.LocalMachine.OpenSubKey("SOFTWARE" + (Environment.Is64BitOperatingSystem ? @"\Wow6432Node" : "") + @"\Maxis\The Sims 4 Create A Sim Demo", false);
-                return rk.GetValue("Install Dir") as string;
+                return rk != null ? rk.GetValue("Install Dir") as string : null;
             }
         }
 

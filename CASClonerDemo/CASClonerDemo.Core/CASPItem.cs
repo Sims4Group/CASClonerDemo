@@ -16,7 +16,7 @@ namespace CASClonerDemo.Core
 {
     public class CASPItem
     {
-        CASPartResource.CASPartResourceTS4 casp;
+        public CASPartResource.CASPartResourceTS4 CASP { get; set; }
         RLEResource rle;
         private IResourceIndexEntry entry;
         
@@ -24,14 +24,14 @@ namespace CASClonerDemo.Core
 
         public CASPItem(Stream s, IResourceIndexEntry entry, IPackage pack) 
         { 
-            this.casp = new CASPartResource.CASPartResourceTS4(1, s);
+            this.CASP = new CASPartResource.CASPartResourceTS4(1, s);
             this.pack = pack;
             this.entry = entry;
             this.ResourceGroup = entry.ResourceGroup;
             this.Instance = entry.Instance;
         }
 
-        public string Name { get { return casp.Name; } set { casp.Name = value; } }
+        public string Name { get { return CASP.Name; } set { CASP.Name = value; } }
         private BitmapImage thumbnail_image;
         public BitmapImage ThumbnailImage {
             get
@@ -41,7 +41,18 @@ namespace CASClonerDemo.Core
                     var thumb = pack.Find(tgi => GetThumbnail(tgi, entry.Instance));
                     this.thumbnail_image = new BitmapImage();
                     this.thumbnail_image.BeginInit();
-                    Stream thumbnailStream = (thumb == null) ? Assembly.GetExecutingAssembly().GetManifestResourceStream(@"CASClonerDemo.Core.Bad.bmp") : (new s4pi.ImageResource.ThumbnailResource(1, WrapperDealer.GetResource(1, pack, thumb).Stream).ToImageStream());
+                    Stream thumbnailStream;
+                    if (thumb != null)
+                    {
+                        s4pi.ImageResource.ThumbnailResource thumbnail = new s4pi.ImageResource.ThumbnailResource(1, WrapperDealer.GetResource(1, pack, thumb).Stream);
+                        thumbnail.TransformToPNG();
+                        thumbnailStream = thumbnail.ToImageStream();
+                    }
+                    else
+                    {
+                        thumbnailStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(@"CASClonerDemo.Core.Bad.bmp");
+                    }
+                    //Stream thumbnailStream = (thumb == null) ? Assembly.GetExecutingAssembly().GetManifestResourceStream(@"CASClonerDemo.Core.Bad.bmp") : (new s4pi.ImageResource.ThumbnailResource(1, WrapperDealer.GetResource(1, pack, thumb).Stream).ToImageStream());
                     this.thumbnail_image.StreamSource = thumbnailStream;
                     this.thumbnail_image.EndInit();
                     
@@ -62,7 +73,7 @@ namespace CASClonerDemo.Core
         public ulong Instance { get; set; }
         public uint ResourceGroup { get; set; }
         public uint ResourceType { get { return 0x034AEECB; } }
-        public Stream UnParse() { return this.casp.Stream; }
+        public Stream UnParse() { return this.CASP.Stream; }
         public override string ToString()
         {
             return this.Name;

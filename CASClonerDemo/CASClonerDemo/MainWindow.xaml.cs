@@ -1,28 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using s4pi.Interfaces;
 using s4pi.Package;
-using s4pi.ImageResource;
 using CASClonerDemo.Core;
 using Microsoft.Win32;
 using s4pi.WrapperDealer;
+using s4pi.ImageResource;
 using System.IO;
 using System.Threading;
 using KUtility;
-using System.Drawing;
 using System.Security.Cryptography;
+using System.Diagnostics;
 
 namespace CASClonerDemo
 {
@@ -33,12 +27,12 @@ namespace CASClonerDemo
     {
         private IPackage fullPack;
         private IPackage thumPack;
+        private IPackage result;
         private System.Windows.Data.CollectionViewSource caspCollection;
         private bool isReplace = true;
         private CASPItem selectedItem;
         private byte[] ddsData;
-
-
+        private string caspItemName;
 
         public MainWindow()
         {
@@ -74,11 +68,12 @@ namespace CASClonerDemo
                 fullPack = Package.OpenPackage(1, fullbuildPath, false);
                 thumPack = Package.OpenPackage(1, thumbnailPath, false);
             }
-            catch(Exception ex)
+            catch
             {
-                MessageBox.Show(ex.ToString());
+                //MessageBox.Show(ex.Message);
                 Environment.ExitCode = 0;
-                this.Close();
+                Application.Current.Shutdown();
+                return;
             }
 
             this.caspCollection = new CollectionViewSource();
@@ -130,10 +125,31 @@ namespace CASClonerDemo
                 this.selectedItem = (CASPItem) this.CASPItemListView.SelectedItem;
             if (this.selectedItem == null)
                 return;
+            CASPItem selectedCASP = this.selectedItem as CASPItem;
+            Debug.WriteLine("0x" + selectedCASP.Instance.ToString("X8"));
+            bool isReplace = this.ckbReplacement.IsChecked == true;
+            Thread thread = new Thread(new ThreadStart(() =>
+             {
+                 string userName = Environment.UserName;
+                 this.caspItemName = userName + "_" + selectedCASP.Name;
+                 result = CloneEngine.CloneCAS(selectedCASP.CASP, this.fullPack, isReplace, this.caspItemName);
 
-            BitmapImage dds = this.selectedItem.getBitmap(fullPack);
-            this.DDSPreviewBefore.Source = dds;
-            this.DDSPreviewAfter.Source = dds;
+                 this.Dispatcher.Invoke(new Action(() =>
+                 {
+                     BitmapImage dds = this.selectedItem.getBitmap(fullPack);
+                     this.DDSPreviewBefore.Source = dds;
+                     this.DDSPreviewAfter.Source = dds;
+                 }));
+
+             }));
+
+            thread.Start();
+            
+            //string userName = Environment.UserName;
+            //this.caspItemName = userName + "_" + selectedCASP.Name;
+            //result = CloneEngine.CloneCAS(selectedCASP.CASP, this.fullPack, !isReplace , name: this.caspItemName);
+
+
         }
 
         private void DDSExportButton_Click(object sender, RoutedEventArgs e)
@@ -156,15 +172,48 @@ namespace CASClonerDemo
                 using (FileStream fs = new FileStream(open.FileName, FileMode.Open))
                 {
                     BinaryReader r = new BinaryReader(fs);
+
                     this.ddsData = r.ReadBytes((int)fs.Length);
                     DDSImage dds = new DDSImage(this.ddsData);
                     var image = dds.images[0];
                     MemoryStream ms = new MemoryStream();
 
+
                     image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
                     ms.Position = 0;
-                    this.DDSPreviewAfter.Source = CASPItem.getBitmapFromStream(ms);
+                    this.DDSPreviewAfter.Dispatcher.Invoke(new Action(() =>
+                    {
+                        this.DDSPreviewAfter.Source = CASPItem.getBitmapFromStream(ms);
+                    }));
 
+                    // replace the DDS RLE image
+                    if (this.result != null)
+                    {
+                        Thread thread = new Thread(new ThreadStart(() =>
+                        {
+                            using (MemoryStream ms2 = new MemoryStream(this.ddsData))
+                            {
+                                ms2.Position = 0;
+                                var rle = new RLEResource(1, null);
+                                rle.ImportToRLE(ms2);
+                                var rleInstance = result.Find(tgi => tgi.Instance == FNV64.GetHash(caspItemName));
+                                result.DeleteResource(rleInstance);
+                                result.AddResource(rleInstance, rle.Stream, true);
+                            }
+                        }));
+
+
+                        thread.Start();
+                        //using (MemoryStream ms2 = new MemoryStream(this.ddsData))
+                        //{
+                        //    ms2.Position = 0;
+                        //    var rle = new RLEResource(1, null);
+                        //    rle.ImportToRLE(ms2);
+                        //    var rleInstance = result.Find(tgi => tgi.Instance == FNV64.GetHash(caspItemName));
+                        //    result.DeleteResource(rleInstance);
+                        //    result.AddResource(rleInstance, rle.Stream, true);
+                        //}
+                    }
                 }
             }
         }
@@ -172,19 +221,11 @@ namespace CASClonerDemo
         private void Wizard_Finished(object sender, RoutedEventArgs e)
         {
             SaveFileDialog save = new SaveFileDialog() { Filter = "DBPF Package|*.package" };
-            if(save.ShowDialog() == true)
+            if(save.ShowDialog() == true && result != null)
             {
-                //if (!isReplace)
-                this.selectedItem.Name = isReplace ? this.selectedItem.Name: System.IO.Path.GetFileNameWithoutExtension(save.FileName);
-                this.selectedItem.Instance = isReplace ? this.selectedItem.Instance : FNV64.GetHash(this.selectedItem.Name + "NEW");
-                using(IPackage newPack = Package.NewPackage(0))
-                {
-                    newPack.AddResource(new TGIBlock(1, null, this.selectedItem.ResourceType, this.selectedItem.ResourceGroup, this.selectedItem.Instance), this.selectedItem.UnParse(), true); // add casp
-                    RLEResource rle = new RLEResource(1, null);
-                    rle.ImportToRLE(new MemoryStream(this.ddsData));
-                    newPack.AddResource(new TGIBlock(1, null, 0x3453CF95, 0x0, FNV64.GetHash(this.selectedItem.Name)), rle.Stream, true); // add rle
-                    newPack.SaveAs(save.FileName);
-                }
+                result.SaveAs(save.FileName);
+                MessageBox.Show("The package has been saved!");
+                this.Close();
             }
         }
 

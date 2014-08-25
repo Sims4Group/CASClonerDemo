@@ -31,7 +31,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="PresentationCore" />
-    <Reference Include="s4pi.CASPartResource, Version=1407.31.247.39233, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="s4pi.CASPartResource, Version=1408.23.154.37630, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Lib\s4pi.CASPartResource.dll</HintPath>
     </Reference>
@@ -78,6 +78,7 @@
     <Compile Include="CASPItem.cs" />
     <Compile Include="CloneEngine.cs" />
     <Compile Include="DDSImage.cs" />
+    <Compile Include="DeepClone.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TS4Registry.cs" />
   </ItemGroup>
