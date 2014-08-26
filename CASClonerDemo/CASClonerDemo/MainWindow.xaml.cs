@@ -17,6 +17,7 @@ using System.Threading;
 using KUtility;
 using System.Security.Cryptography;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace CASClonerDemo
 {
@@ -29,7 +30,6 @@ namespace CASClonerDemo
         private IPackage thumPack;
         private IPackage result;
         private System.Windows.Data.CollectionViewSource caspCollection;
-        private bool isReplace = true;
         private CASPItem selectedItem;
         private byte[] ddsData;
         private string caspItemName;
@@ -41,51 +41,75 @@ namespace CASClonerDemo
             
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private void LoadAndCheckAssembly()
         {
 
-
-            string fullbuildPath = TS4Registry.CASDemoFullBuildPath;
-            string thumbnailPath = TS4Registry.CASDemoThumPath;
-
-            if (string.IsNullOrEmpty(fullbuildPath))
+            string currentPath = new Uri(Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetName().CodeBase)).LocalPath;
+            string[] assemblyName = new string[] { "s4pi.CASPartResource.dll", "s4pi.DefaultResource.dll", "s4pi.ImageResource.dll", "s4pi.WrapperDealer.dll" };
+            foreach(string assembly in assemblyName)
             {
-                OpenFileDialog open = new OpenFileDialog() { Filter = "DBPF Package File|*.package", Multiselect = false, Title = "Please select your FullBuildFolder" };
-                if (open.ShowDialog() == true)
-                {
-                    fullbuildPath = open.FileName;
-                    string rootDir = System.IO.Path.GetDirectoryName(fullbuildPath);
-                    thumbnailPath = System.IO.Path.Combine(rootDir, "CASDemoThumbnails.package");
-                }
-                else
-                {
-                    Environment.ExitCode = 0;
-                    this.Close();
-                }
+                Assembly.LoadFrom(Path.Combine(currentPath, assembly));
             }
+            // Load Default Resource
+
+            if(AppDomain.CurrentDomain.GetAssemblies().Length != 32)
+            {
+                MessageBox.Show("We tried to force the system to load all assemblies correctly, yet due to some unknown reasons the problem still can't be solved.");
+            }
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
             try
             {
-                fullPack = Package.OpenPackage(1, fullbuildPath, false);
-                thumPack = Package.OpenPackage(1, thumbnailPath, false);
-            }
-            catch
-            {
-                //MessageBox.Show(ex.Message);
-                Environment.ExitCode = 0;
-                Application.Current.Shutdown();
-                return;
-            }
+                LoadAndCheckAssembly();
 
-            this.caspCollection = new CollectionViewSource();
-            List<CASPItem> caspList  = new List<CASPItem>();
+                string fullbuildPath = TS4Registry.CASDemoFullBuildPath;
+                string thumbnailPath = TS4Registry.CASDemoThumPath;
 
-            var rlist = fullPack.GetResourceList.Where(tgi => tgi.ResourceType == 0x034AEECB).ToArray();
-            foreach (var entry in rlist)
-            {
-                caspList.Add(new CASPItem(WrapperDealer.GetResource(1, fullPack, entry).Stream, entry, thumPack));
+                if (string.IsNullOrEmpty(fullbuildPath))
+                {
+                    OpenFileDialog open = new OpenFileDialog() { Filter = "DBPF Package File|*.package", Multiselect = false, Title = "Please select your FullBuildFolder" };
+                    if (open.ShowDialog() == true)
+                    {
+                        fullbuildPath = open.FileName;
+                        string rootDir = System.IO.Path.GetDirectoryName(fullbuildPath);
+                        thumbnailPath = System.IO.Path.Combine(rootDir, "CASDemoThumbnails.package");
+                    }
+                    else
+                    {
+                        Environment.ExitCode = 0;
+                        this.Close();
+                    }
+                }
+                try
+                {
+                    fullPack = Package.OpenPackage(1, fullbuildPath, false);
+                    thumPack = Package.OpenPackage(1, thumbnailPath, false);
+                }
+                catch
+                {
+                    //MessageBox.Show(ex.Message);
+                    Environment.ExitCode = 0;
+                    Application.Current.Shutdown();
+                    return;
+                }
+
+                this.caspCollection = new CollectionViewSource();
+                List<CASPItem> caspList = new List<CASPItem>();
+
+                var rlist = fullPack.GetResourceList.Where(tgi => tgi.ResourceType == 0x034AEECB).ToArray();
+                foreach (var entry in rlist)
+                {
+                    caspList.Add(new CASPItem(WrapperDealer.GetResource(1, fullPack, entry).Stream, entry, thumPack));
+                }
+                this.caspCollection.Source = caspList;
+                LoadImageFinished();
             }
-            this.caspCollection.Source = caspList;
-            LoadImageFinished();
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
         }
 
         
@@ -131,7 +155,7 @@ namespace CASClonerDemo
             Thread thread = new Thread(new ThreadStart(() =>
              {
                  string userName = Environment.UserName;
-                 this.caspItemName = userName + "_" + selectedCASP.Name;
+                 this.caspItemName = userName + "_" + selectedCASP.Name + "_" + CloneEngine.GetTimestamp(DateTime.Now);
                  result = CloneEngine.CloneCAS(selectedCASP.CASP, this.fullPack, isReplace, this.caspItemName);
 
                  this.Dispatcher.Invoke(new Action(() =>
@@ -171,48 +195,55 @@ namespace CASClonerDemo
             {
                 using (FileStream fs = new FileStream(open.FileName, FileMode.Open))
                 {
-                    BinaryReader r = new BinaryReader(fs);
-
-                    this.ddsData = r.ReadBytes((int)fs.Length);
-                    DDSImage dds = new DDSImage(this.ddsData);
-                    var image = dds.images[0];
-                    MemoryStream ms = new MemoryStream();
-
-
-                    image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-                    ms.Position = 0;
-                    this.DDSPreviewAfter.Dispatcher.Invoke(new Action(() =>
+                    try
                     {
-                        this.DDSPreviewAfter.Source = CASPItem.getBitmapFromStream(ms);
-                    }));
+                        BinaryReader r = new BinaryReader(fs);
 
-                    // replace the DDS RLE image
-                    if (this.result != null)
-                    {
-                        Thread thread = new Thread(new ThreadStart(() =>
+                        this.ddsData = r.ReadBytes((int)fs.Length);
+                        DDSImage dds = new DDSImage(this.ddsData);
+                        var image = dds.images[0];
+                        MemoryStream ms = new MemoryStream();
+
+
+                        image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                        ms.Position = 0;
+                        this.DDSPreviewAfter.Dispatcher.Invoke(new Action(() =>
                         {
-                            using (MemoryStream ms2 = new MemoryStream(this.ddsData))
-                            {
-                                ms2.Position = 0;
-                                var rle = new RLEResource(1, null);
-                                rle.ImportToRLE(ms2);
-                                var rleInstance = result.Find(tgi => tgi.Instance == FNV64.GetHash(caspItemName));
-                                result.DeleteResource(rleInstance);
-                                result.AddResource(rleInstance, rle.Stream, true);
-                            }
+                            this.DDSPreviewAfter.Source = CASPItem.getBitmapFromStream(ms);
                         }));
 
+                        // replace the DDS RLE image
+                        if (this.result != null)
+                        {
+                            Thread thread = new Thread(new ThreadStart(() =>
+                            {
+                                using (MemoryStream ms2 = new MemoryStream(this.ddsData))
+                                {
+                                    ms2.Position = 0;
+                                    var rle = new RLEResource(1, null);
+                                    rle.ImportToRLE(ms2);
+                                    var rleInstance = result.Find(tgi => tgi.Instance == FNV64.GetHash(caspItemName));
+                                    result.DeleteResource(rleInstance);
+                                    result.AddResource(rleInstance, rle.Stream, true);
+                                }
+                            }));
 
-                        thread.Start();
-                        //using (MemoryStream ms2 = new MemoryStream(this.ddsData))
-                        //{
-                        //    ms2.Position = 0;
-                        //    var rle = new RLEResource(1, null);
-                        //    rle.ImportToRLE(ms2);
-                        //    var rleInstance = result.Find(tgi => tgi.Instance == FNV64.GetHash(caspItemName));
-                        //    result.DeleteResource(rleInstance);
-                        //    result.AddResource(rleInstance, rle.Stream, true);
-                        //}
+
+                            thread.Start();
+                            //using (MemoryStream ms2 = new MemoryStream(this.ddsData))
+                            //{
+                            //    ms2.Position = 0;
+                            //    var rle = new RLEResource(1, null);
+                            //    rle.ImportToRLE(ms2);
+                            //    var rleInstance = result.Find(tgi => tgi.Instance == FNV64.GetHash(caspItemName));
+                            //    result.DeleteResource(rleInstance);
+                            //    result.AddResource(rleInstance, rle.Stream, true);
+                            //}
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        MessageBox.Show(ex.ToString());
                     }
                 }
             }

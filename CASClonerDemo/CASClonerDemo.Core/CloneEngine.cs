@@ -13,7 +13,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace CASClonerDemo.Core
 {
-    public class CloneEngine
+    public static class CloneEngine
     {
 
         public static IPackage CloneCAS(CASPartResourceTS4 oldCASP, IPackage source, bool isReplace = false, string name = "")
@@ -26,7 +26,7 @@ namespace CASClonerDemo.Core
             Random r = new Random();
             string hashSalt = DateTime.Now.ToShortTimeString() + r.Next().ToString();
             if (name == "") name = oldCASP.Name;
-            newCASP.Name = isReplace? oldCASP.Name : name;
+            newCASP.Name = isReplace ? oldCASP.Name : name;
 
             // Add RLE texture files
             foreach (TGIBlock RLETGI in newCASP.TGIList.FindAll(tgi => tgi.ResourceType == 0x3453CF95))
@@ -37,8 +37,8 @@ namespace CASClonerDemo.Core
                 {
                     if (newRLETGI.Instance == FNV64.GetHash(oldCASP.Name))
                     {
-                        newRLETGI.Instance = FNV64.GetHash(name);
-                        RLETGI.Instance = FNV64.GetHash(name);
+                        newRLETGI.Instance = FNV64.GetHash(newCASP.Name);
+                        RLETGI.Instance = FNV64.GetHash(newCASP.Name);
                     }
                     else
                     {
@@ -131,7 +131,10 @@ namespace CASClonerDemo.Core
             return result;
         }
 
-
+        public static String GetTimestamp(this DateTime value)
+        {
+            return value.ToString("yyyyMMddHHmmssffff");
+        }
 
         public static IResourceKey CASPCloneFromOldTGI(IPackage source, TGIBlock tgi, out Stream stream)
         {
