@@ -44,6 +44,10 @@
     <Reference Include="s4pi.DefaultResource">
       <HintPath>..\CASClonerDemo.Core\Lib\s4pi.DefaultResource.dll</HintPath>
     </Reference>
+    <Reference Include="s4pi.GenericRCOLResource, Version=1408.22.1802.23466, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CASClonerDemo.Core\Lib\s4pi.GenericRCOLResource.dll</HintPath>
+    </Reference>
     <Reference Include="s4pi.ImageResource, Version=1408.2.539.27375, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\CASClonerDemo.Core\Lib\s4pi.ImageResource.dll</HintPath>
@@ -132,6 +136,10 @@
     <ProjectReference Include="..\CASClonerDemo.Core\CASClonerDemo.Core.csproj">
       <Project>{090b06b6-40c0-4b4c-8f19-4bf72c5a8602}</Project>
       <Name>CASClonerDemo.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\S4Studio.Rendering\S4Studio.Rendering.csproj">
+      <Project>{024c0574-c8da-4158-b546-6afdae155d22}</Project>
+      <Name>S4Studio.Rendering</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

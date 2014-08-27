@@ -11,6 +11,7 @@ using s4pi.WrapperDealer;
 using System.Windows.Media.Imaging;
 using System.Reflection;
 using System.Windows.Media;
+using System.Drawing;
 
 namespace CASClonerDemo.Core
 {
@@ -87,7 +88,7 @@ namespace CASClonerDemo.Core
             return true;
         }
 
-        public BitmapImage getBitmap(IPackage pack)
+        public Bitmap getBitmap(IPackage pack)
         {
 
             ulong instance = FNV64.GetHash(this.Name);
@@ -102,19 +103,29 @@ namespace CASClonerDemo.Core
             }
 
             var dds = new KUtility.DDSImage((rle.ToDDS() as MemoryStream).ToArray());
-            MemoryStream imageStream = new MemoryStream();
-            dds.images[0].Save(imageStream,System.Drawing.Imaging.ImageFormat.Png);
-            return getBitmapFromStream(imageStream);
+            //MemoryStream imageStream = new MemoryStream();
+            //dds.images[0].Save(imageStream,System.Drawing.Imaging.ImageFormat.Png);
+            //return getBitmapFromStream(imageStream);
+            return dds.images[0];
         }
 
-        public static BitmapImage getBitmapFromStream(Stream s)
+        public static Bitmap getBitMapFromRLE(RLEResource rle)
         {
-            var image = new BitmapImage();
-            image.BeginInit();
-            image.StreamSource = s;
-            image.EndInit();
-            return image;
+            var dds = new KUtility.DDSImage((rle.ToDDS() as MemoryStream).ToArray());
+            return dds.images[0];
         }
+
+
+       
+
+        //public static BitmapImage getBitmapFromStream(Stream s)
+        //{
+        //    var image = new BitmapImage();
+        //    image.BeginInit();
+        //    image.StreamSource = s;
+        //    image.EndInit();
+        //    return image;
+        //}
 
         public void Clear()
         {

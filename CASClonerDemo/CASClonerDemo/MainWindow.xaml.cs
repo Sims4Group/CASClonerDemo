@@ -18,6 +18,8 @@ using KUtility;
 using System.Security.Cryptography;
 using System.Diagnostics;
 using System.Reflection;
+using s4pi.GenericRCOLResource;
+using System.Drawing;
 
 namespace CASClonerDemo
 {
@@ -158,12 +160,7 @@ namespace CASClonerDemo
                  this.caspItemName = userName + "_" + selectedCASP.Name + "_" + CloneEngine.GetTimestamp(DateTime.Now);
                  result = CloneEngine.CloneCAS(selectedCASP.CASP, this.fullPack, isReplace, this.caspItemName);
 
-                 this.Dispatcher.Invoke(new Action(() =>
-                 {
-                     BitmapImage dds = this.selectedItem.getBitmap(fullPack);
-                     this.DDSPreviewBefore.Source = dds;
-                     this.DDSPreviewAfter.Source = dds;
-                 }));
+                 LoadMeshWithTexture();
 
              }));
 
@@ -173,7 +170,77 @@ namespace CASClonerDemo
             //this.caspItemName = userName + "_" + selectedCASP.Name;
             //result = CloneEngine.CloneCAS(selectedCASP.CASP, this.fullPack, !isReplace , name: this.caspItemName);
 
+        }
 
+
+        private void LoadMeshWithTexture()
+        {
+            this.Dispatcher.Invoke(new Action(() =>
+            {
+                removeBodyMesh();
+                Bitmap img = this.selectedItem.getBitmap(fullPack);
+                var rlist = result.GetResourceList;
+                var geom = result.GetResourceList.Any(tgi => tgi.ResourceType == 0x015A1849) ? (GenericRCOLResource)WrapperDealer.GetResource(0, result,
+                    rlist.Where(x => x.ResourceType == 0x015A1849).OrderByDescending(x => x.Memsize).FirstOrDefault()) : null;
+                if (geom == null) // might be a makeup or tatoo
+                {
+                    var names = caspItemName.Split(new char[] { '_' }, StringSplitOptions.RemoveEmptyEntries);
+                    bool isMale = true;
+                    if (names.Length > 1)
+                    {
+                        isMale = names[1][1] == 'm';
+                    }
+                    loadBodyMesh(isMale, img);
+                    //this._3dPreview.AddBodyMesh(new GenericRCOLResource(1, null), img);
+                }
+                else
+                {
+                    LoadMeshWithTexture(geom, img);
+                }
+                //this.DDSPreviewBefore.Source = dds;
+                //this.DDSPreviewAfter.Source = dds;
+            }));
+        }
+
+
+        private void loadBodyMesh(bool isMale, Bitmap img)
+        {
+
+            var bodyTexture = (RLEResource)WrapperDealer.GetResource(0, fullPack, fullPack.GetResourceList.FirstOrDefault(x => x.ResourceType == 0x3453CF95 && x.Instance == 0xC7B7131033261079));
+            var bodyTextureBitmap = CASPItem.getBitMapFromRLE(bodyTexture);
+            List<Bitmap> images = new List<Bitmap>() { bodyTextureBitmap, img };
+            var overlay = Texture.GetOverlay(images);
+            var headMesh = (GenericRCOLResource)WrapperDealer.GetResource(0, fullPack,
+                fullPack.GetResourceList.Where(x => x.ResourceType == 0x015A1849 && x.Instance == (isMale ? 0xc7b7131033261079U: 0x3e68f8b6f44da2aaU)).OrderByDescending(x => x.Memsize).FirstOrDefault());
+            //var headDDS = 
+            if (headMesh != null) this._3dPreview.AddBodyMesh(headMesh, overlay);
+
+            var bodyTopMesh = (GenericRCOLResource)WrapperDealer.GetResource(0, fullPack,
+                fullPack.GetResourceList.Where(x => x.ResourceType == 0x015A1849 && x.Instance == (isMale ? 0xfacb14f02cd72951U : 0x7379b6313337dbfaU)).OrderByDescending(x => x.Memsize).FirstOrDefault());
+
+            if (bodyTopMesh != null) this._3dPreview.AddBodyMesh(bodyTopMesh, overlay);
+
+            var bodyBottomMesh = (GenericRCOLResource)WrapperDealer.GetResource(0, fullPack,
+                fullPack.GetResourceList.Where(x => x.ResourceType == 0x015A1849 && x.Instance == (isMale ? 0x1656f10b0b390821U: 0x562009b9d4fbc1c2U)).OrderByDescending(x => x.Memsize).FirstOrDefault());
+            if (bodyBottomMesh != null) this._3dPreview.AddBodyMesh(bodyBottomMesh, overlay);
+
+            var feetMesh = (GenericRCOLResource)WrapperDealer.GetResource(0, fullPack,
+                fullPack.GetResourceList.Where(x => x.ResourceType == 0x015A1849 && x.Instance == (isMale ? 0x203835e631bb51e2U: 0xca169679e2cd5df1U)).OrderByDescending(x => x.Memsize).FirstOrDefault());
+            if (feetMesh != null) this._3dPreview.AddBodyMesh(feetMesh, overlay);
+        }
+
+        private void LoadMeshWithTexture(GenericRCOLResource geom, Bitmap img)
+        {
+            var bodyTexture = (RLEResource)WrapperDealer.GetResource(0, fullPack, fullPack.GetResourceList.FirstOrDefault(x => x.ResourceType == 0x3453CF95 && x.Instance == 0xC7B7131033261079));
+            var bodyTextureBitmap = CASPItem.getBitMapFromRLE(bodyTexture);
+            List<Bitmap> images = new List<Bitmap>() { bodyTextureBitmap, img };
+            var overlay = Texture.GetOverlay(images);
+            this._3dPreview.AddBodyMesh(geom, overlay);
+        }
+
+        private void removeBodyMesh()
+        {
+            this._3dPreview.ClearMeshes();
         }
 
         private void DDSExportButton_Click(object sender, RoutedEventArgs e)
@@ -207,10 +274,10 @@ namespace CASClonerDemo
 
                         image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
                         ms.Position = 0;
-                        this.DDSPreviewAfter.Dispatcher.Invoke(new Action(() =>
-                        {
-                            this.DDSPreviewAfter.Source = CASPItem.getBitmapFromStream(ms);
-                        }));
+                        //this.DDSPreviewAfter.Dispatcher.Invoke(new Action(() =>
+                        //{
+                        //    this.DDSPreviewAfter.Source = CASPItem.getBitmapFromStream(ms);
+                        //}));
 
                         // replace the DDS RLE image
                         if (this.result != null)
@@ -225,20 +292,13 @@ namespace CASClonerDemo
                                     var rleInstance = result.Find(tgi => tgi.Instance == FNV64.GetHash(caspItemName));
                                     result.DeleteResource(rleInstance);
                                     result.AddResource(rleInstance, rle.Stream, true);
+                                    LoadMeshWithTexture();
                                 }
                             }));
 
 
                             thread.Start();
-                            //using (MemoryStream ms2 = new MemoryStream(this.ddsData))
-                            //{
-                            //    ms2.Position = 0;
-                            //    var rle = new RLEResource(1, null);
-                            //    rle.ImportToRLE(ms2);
-                            //    var rleInstance = result.Find(tgi => tgi.Instance == FNV64.GetHash(caspItemName));
-                            //    result.DeleteResource(rleInstance);
-                            //    result.AddResource(rleInstance, rle.Stream, true);
-                            //}
+
                         }
                     }
                     catch(Exception ex)
@@ -268,6 +328,57 @@ namespace CASClonerDemo
         private void TextBlock_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             Process.Start("http://www.den.simlogical.com/denforum/index.php?topic=3190");
+        }
+
+        private void GEOMExportButton_Click(object sender, RoutedEventArgs e)
+        {
+            var geomStream = WrapperDealer.GetResource(0, result,
+                         result.GetResourceList.Where(x => x.ResourceType == 0x015A1849).OrderByDescending(x => x.Memsize).FirstOrDefault()).Stream;
+            SaveFileDialog save = new SaveFileDialog() { Filter = "GEOM|*.simgeom" };
+            if (save.ShowDialog() == true)
+            {
+                using (FileStream fs = new FileStream(save.FileName, FileMode.Create))
+                {
+                    geomStream.CopyTo(fs);
+                }
+            }
+
+        }
+
+        private void GEOMImportButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog open = new OpenFileDialog() { Filter = "DXT5 Image|*.dds" };
+            if (open.ShowDialog() == true)
+            {
+                using (FileStream fs = new FileStream(open.FileName, FileMode.Open))
+                {
+                    try
+                    {
+                        BinaryReader r = new BinaryReader(fs);
+                       
+                        if (this.result != null)
+                        {
+                            Thread thread = new Thread(new ThreadStart(() =>
+                            {
+                                var oldgeom =  result.GetResourceList.Where(x => x.ResourceType == 0x015A1849).OrderByDescending(x => x.Memsize).FirstOrDefault();
+                                if(oldgeom != null)
+                                {
+                                    result.DeleteResource(oldgeom);
+                                    result.AddResource(oldgeom, fs, true);
+                                    LoadMeshWithTexture();
+                                }
+                            }));
+
+
+                            thread.Start();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.ToString());
+                    }
+                }
+            }
         }
 
 
