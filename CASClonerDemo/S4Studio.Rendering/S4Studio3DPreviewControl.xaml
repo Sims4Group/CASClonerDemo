@@ -6,13 +6,18 @@
              xmlns:h="http://helixtoolkit.codeplex.com"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
-    <Grid Margin="0,0,-169,0">
+    <Grid Margin="0,0,-169,0" Background="CornflowerBlue">
         <h:HelixViewport3D Name="mainViewport" 
                                 ClipToBounds="True" 
-                                Focusable="True" CameraRotationMode="Trackball"  ModelUpDirection="0,0,-1">
-            <h:DefaultLights/>
+                                Focusable="True" CameraRotationMode="Trackball"  ZoomSensitivity=".3" RotationSensitivity=".3" UpDownPanSensitivity=".1" LeftRightPanSensitivity=".1" ShowViewCube="True" Cursor="IBeam">
+            <h:HelixViewport3D.Camera>
+                <PerspectiveCamera Position="0, -4, 2"  LookDirection="0,4,-1" FieldOfView="45" UpDirection="0,1,0" />
+            </h:HelixViewport3D.Camera>
+            
+            <h:DefaultLights></h:DefaultLights>
+            <h:DefaultLights></h:DefaultLights>
             <ModelVisual3D>
-                <h:GridLinesVisual3D MajorDistance="1" ></h:GridLinesVisual3D>
+                <h:GridLinesVisual3D MajorDistance="1" Width="10"  Length="10" Fill="#FF4F4F4F" Thickness="0.01" ></h:GridLinesVisual3D>
                 <ModelVisual3D.Content>
                     <Model3DGroup x:Name="mGroupMeshes"></Model3DGroup>
                 </ModelVisual3D.Content>
