@@ -9,7 +9,7 @@
     <Grid Margin="0,0,-169,0" Background="CornflowerBlue">
         <h:HelixViewport3D Name="mainViewport" 
                                 ClipToBounds="True" 
-                                Focusable="True" CameraRotationMode="Trackball"  ZoomSensitivity=".3" RotationSensitivity=".3" UpDownPanSensitivity=".1" LeftRightPanSensitivity=".1" ShowViewCube="True" Cursor="IBeam">
+                                Focusable="True" CameraRotationMode="Turntable"  ZoomSensitivity=".3" RotationSensitivity=".3" UpDownPanSensitivity=".1" LeftRightPanSensitivity=".1" ShowViewCube="True" Cursor="IBeam">
             <h:HelixViewport3D.Camera>
                 <PerspectiveCamera Position="0, -4, 2"  LookDirection="0,4,-1" FieldOfView="45" UpDirection="0,1,0" />
             </h:HelixViewport3D.Camera>
