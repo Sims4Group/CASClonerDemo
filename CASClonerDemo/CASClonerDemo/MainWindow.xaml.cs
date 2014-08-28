@@ -54,10 +54,10 @@ namespace CASClonerDemo
             }
             // Load Default Resource
 
-            if(AppDomain.CurrentDomain.GetAssemblies().Length != 32)
-            {
-                MessageBox.Show("We tried to force the system to load all assemblies correctly, yet due to some unknown reasons the problem still can't be solved.");
-            }
+            //if(AppDomain.CurrentDomain.GetAssemblies().Length != 32)
+            //{
+            //    MessageBox.Show("We tried to force the system to load all assemblies correctly, yet due to some unknown reasons the problem still can't be solved.");
+            //}
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

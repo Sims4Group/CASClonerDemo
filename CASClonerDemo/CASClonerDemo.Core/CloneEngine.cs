@@ -29,22 +29,26 @@ namespace CASClonerDemo.Core
             newCASP.Name = isReplace ? oldCASP.Name : name;
 
             // Add RLE texture files
-            foreach (TGIBlock RLETGI in newCASP.TGIList.FindAll(tgi => tgi.ResourceType == 0x3453CF95))
+            foreach (TGIBlock RLETGIinCASP in newCASP.TGIList.FindAll(tgi => tgi.ResourceType == 0x3453CF95))
             {
                 Stream rleStream;
-                IResourceKey newRLETGI = CASPCloneFromOldTGI(source, RLETGI, out rleStream);
+                IResourceKey newRLETGI = CASPCloneFromOldTGI(source, RLETGIinCASP, out rleStream);
                 if (!isReplace)
                 {
                     if (newRLETGI.Instance == FNV64.GetHash(oldCASP.Name))
                     {
-                        newRLETGI.Instance = FNV64.GetHash(newCASP.Name);
-                        RLETGI.Instance = FNV64.GetHash(newCASP.Name);
+                        newRLETGI.Instance = FNV64.GetHash(newCASP.Name) | 0x8000000000000000;
+                        RLETGIinCASP.Instance = FNV64.GetHash(newCASP.Name) | 0x8000000000000000;
+                        newRLETGI.ResourceGroup |= 0x80000000;
+                        RLETGIinCASP.ResourceGroup |= 0x80000000;
                     }
                     else
                     {
                         // for dump map
-                        newRLETGI.Instance = FNV64.GetHash(RLETGI.Instance.ToString() + hashSalt);
-                        RLETGI.Instance = FNV64.GetHash(RLETGI.Instance.ToString() + hashSalt);
+                        newRLETGI.Instance = FNV64.GetHash(RLETGIinCASP.Instance.ToString() + hashSalt) | 0x8000000000000000;
+                        RLETGIinCASP.Instance = FNV64.GetHash(RLETGIinCASP.Instance.ToString() + hashSalt) | 0x8000000000000000;
+                        newRLETGI.ResourceGroup |= 0x80000000;
+                        RLETGIinCASP.ResourceGroup |= 0x80000000;
                     }
                 }
                 if (rleStream == null) throw new InvalidOperationException("Cannot find RLE resource inside the package");
@@ -62,7 +66,7 @@ namespace CASClonerDemo.Core
                 GEOMListResource oldGEOMList = new GEOMListResource(1, geomResourceStream);
                 GEOMListResource newGEOMList = oldGEOMList.Copy();
 
-                ulong geomNewInstance = FNV64.GetHash(name + "geom" + hashSalt);
+                ulong geomNewInstance = FNV64.GetHash(name + "geom" + hashSalt) | 0x8000000000000000;
 
                 if (!isReplace)
                 {
@@ -76,57 +80,77 @@ namespace CASClonerDemo.Core
                     }
 
                     newGeomReferenceListTGI.Instance = geomNewInstance;
+                    newGeomReferenceListTGI.ResourceGroup |= 0x80000000;
                     newGEOMList.CurrentInstance.Instance = geomNewInstance;
+                    newGEOMList.CurrentInstance.ResourceType |= 0x80000000;
                     newCASP.TGIList.Find(tgi => tgi.Instance == oldGeomReferenceList.Instance && tgi.ResourceType == oldGeomReferenceList.ResourceType).Instance = geomNewInstance;
                 }
 
                 result.AddResource(newGeomReferenceListTGI, newGEOMList.Stream, true);
 
-                foreach (TGIBlock TGI in newCASP.TGIList.FindAll(tgi => tgi.ResourceType == 0x015A1849))
+                foreach (TGIBlock TGIinCASP in newCASP.TGIList.FindAll(tgi => tgi.ResourceType == 0x015A1849))
                 {
                     Stream geomStream;
-                    IResourceKey geomTGI = CASPCloneFromOldTGI(source, TGI, out geomStream);
+                    IResourceKey geomTGI = CASPCloneFromOldTGI(source, TGIinCASP, out geomStream);
                     if (!isReplace)
                     {
-                        TGI.Instance = geomNewInstance;
+                        TGIinCASP.Instance = geomNewInstance;
                         geomTGI.Instance = geomNewInstance;
+                        TGIinCASP.ResourceGroup |= 0x80000000;
+                        geomTGI.ResourceGroup |= 0x80000000;
                     }
                     result.AddResource(geomTGI, geomStream, true);
                 }
             }
+
             // Add RLES
-            TGIBlock rles = newCASP.TGIList.Find(tgi => tgi.ResourceType == 0xBA856C78);
-            if (rles != null)
+            TGIBlock rlesInCASP = newCASP.TGIList.Find(tgi => tgi.ResourceType == 0xBA856C78);
+            if (rlesInCASP != null)
             {
                 Stream RlesStream;
-                IResourceKey newRLES = CASPCloneFromOldTGI(source, rles, out RlesStream);
+                IResourceKey newRLES = CASPCloneFromOldTGI(source, rlesInCASP, out RlesStream);
                 if (!isReplace)
                 {
-                    ulong rlesInstance = FNV64.GetHash(rles.Instance.ToString() + hashSalt);
-                    rles.Instance = rlesInstance;
+                    ulong rlesInstance = FNV64.GetHash(rlesInCASP.Instance.ToString() + hashSalt) | 0x8000000000000000;
+                    rlesInCASP.Instance = rlesInstance;
                     newRLES.Instance = rlesInstance;
+                    rlesInCASP.ResourceGroup |= 0x80000000;
+                    newRLES.ResourceGroup = rlesInCASP.ResourceGroup;
                 }
                 result.AddResource(newRLES, RlesStream, true);
             }
 
             // Weird _IMG stiff. maybe swatch? Need to ask grant
-            TGIBlock _imgOld = newCASP.TGIList.Find(tgi => tgi.ResourceType == 0x00B2D882);
-            if(_imgOld != null)
+            TGIBlock _imgInCASP = newCASP.TGIList.Find(tgi => tgi.ResourceType == 0x00B2D882);
+            if(_imgInCASP != null)
             {
                 Stream _imgStream;
-                IResourceKey _imgNew = CASPCloneFromOldTGI(source, _imgOld, out _imgStream);
+                IResourceKey _imgNew = CASPCloneFromOldTGI(source, _imgInCASP, out _imgStream);
                 if(!isReplace)
                 {
                     _imgNew.Instance = FNV64.GetHash("swatch?" + hashSalt);
+                    _imgNew.ResourceGroup |= 0x80000000;
+                    _imgNew.Instance |= 0x8000000000000000;
+                    _imgInCASP.Instance = _imgNew.Instance;
+                    _imgInCASP.ResourceGroup = _imgNew.ResourceGroup;
+                    _imgInCASP.Instance = _imgNew.Instance;
                 }
 
                 result.AddResource(_imgNew, _imgStream, true);
             }
 
             // add CASP resource finally
-            TGIBlock newCASPTGI = new TGIBlock(1, null, 0x034AEECBU, 0U, FNV32.GetHash(hashSalt)); // normal 64 hash sometimes doesn't work
+            TGIBlock newCASPTGI = new TGIBlock(1, null, 0x034AEECBU, 0x80000000U, FNV32.GetHash(hashSalt) | 0x8000000000000000); // normal 64 hash sometimes doesn't work
             if (!isReplace) newCASP.OutfitGroup = FNV32.GetHash(hashSalt);
             result.AddResource(newCASPTGI, newCASP.Stream, true);
+
+            foreach(var entry in result.GetResourceList)
+            {
+                // compress the entry
+                entry.Compressed = 0x425A;
+                //entry.ResourceGroup |= 0x80000000;
+                //entry.Instance |= 0x8000000000000000;
+            }
 
             return result;
         }
