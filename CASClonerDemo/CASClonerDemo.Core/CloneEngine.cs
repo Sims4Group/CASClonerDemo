@@ -15,6 +15,8 @@ namespace CASClonerDemo.Core
 {
     public static class CloneEngine
     {
+        private const uint GroupHighBit = 0x1U << 31;
+        private const ulong InstanceHighBit = 0x1UL << 63;
 
         public static IPackage CloneCAS(CASPartResourceTS4 oldCASP, IPackage source, bool isReplace = false, string name = "")
         {
@@ -169,6 +171,12 @@ namespace CASClonerDemo.Core
             return result;
         }
 
+
+        private void SetHighBitForTGI(IResourceKey tgi)
+        {
+            tgi.Instance |= InstanceHighBit;
+            tgi.ResourceGroup |= GroupHighBit;
+        }
 
        
     }
